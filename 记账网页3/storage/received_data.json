@@ -1,0 +1,108 @@
+[
+  {
+    "data": {
+      "records": [
+        {
+          "id": "rec_abc123",
+          "fields": {
+            "日期": "2023-11-22",
+            "金额": 100.5,
+            "分类": "餐饮",
+            "备注": "午餐"
+          },
+          "action": "create",
+          "table_id": "tbl_123456",
+          "created_at": "2023-11-22T08:00:00Z"
+        },
+        {
+          "id": "rec_def456",
+          "fields": {
+            "日期": "2023-11-22",
+            "金额": 50,
+            "分类": "交通",
+            "备注": "地铁"
+          },
+          "action": "update",
+          "table_id": "tbl_123456",
+          "updated_at": "2023-11-22T09:00:00Z"
+        }
+      ],
+      "app_id": "app_789012",
+      "user_id": "usr_345678"
+    },
+    "timestamp": "2025-11-22T01:54:04.340Z",
+    "headers": {
+      "x-lark-timestamp": "1763776444259",
+      "x-lark-nonce": "xcxb0q5q"
+    }
+  },
+  {
+    "data": {
+      "records": [
+        {
+          "id": "rec_complex_001",
+          "fields": {
+            "日期": "2023-11-23",
+            "金额": 299.99,
+            "分类": "购物",
+            "备注": "电子产品",
+            "标签": [
+              "重要",
+              "必需品"
+            ],
+            "是否报销": true,
+            "负责人": {
+              "name": "张三",
+              "id": "usr_123"
+            },
+            "关联表格": "tbl_789"
+          },
+          "action": "create",
+          "table_id": "tbl_complex",
+          "created_at": "2023-11-23T10:00:00Z"
+        },
+        {
+          "id": "rec_complex_002",
+          "fields": {
+            "日期": "2023-11-23",
+            "金额": 88.5,
+            "分类": "娱乐",
+            "备注": "电影票",
+            "标签": [
+              "休闲"
+            ],
+            "是否报销": false,
+            "负责人": {
+              "name": "李四",
+              "id": "usr_456"
+            }
+          },
+          "action": "update",
+          "table_id": "tbl_complex",
+          "updated_at": "2023-11-23T15:30:00Z"
+        },
+        {
+          "fields": {
+            "日期": "2023-11-24",
+            "金额": 120,
+            "分类": "住宿",
+            "备注": "酒店",
+            "标签": [
+              "出差"
+            ],
+            "是否报销": true
+          },
+          "action": "create",
+          "table_id": "tbl_complex"
+        }
+      ],
+      "app_id": "app_complex",
+      "event_type": "batch_update"
+    },
+    "timestamp": "2025-11-22T01:56:46.547Z",
+    "headers": {
+      "x-lark-timestamp": "1763776606483",
+      "x-lark-nonce": "xo8yayqo"
+    }
+  }
+]

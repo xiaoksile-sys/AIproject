@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞书多维表格数据管理工具</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0084FF',
+                        secondary: '#00C2B8',
+                        accent: '#722ED1',
+                        success: '#52C41A',
+                        warning: '#FAAD14',
+                        error: '#F5222D',
+                        neutral: '#8C8C8C',
+                        'neutral-light': '#F5F5F5',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow-sm {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+    
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #FAFAFA;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        /* 响应式导航栏 */
+        .nav-scrolled {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* 卡片悬停效果 */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <header id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa fa-table text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    飞书多维表格数据管理
+                </h1>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#data-input" class="text-gray-700 hover:text-primary font-medium transition-colors">数据输入</a>
+                <a href="#data-query" class="text-gray-700 hover:text-primary font-medium transition-colors">数据查询</a>
+                <a href="#data-stats" class="text-gray-700 hover:text-primary font-medium transition-colors">数据统计</a>
+                <a href="#system-info" class="text-gray-700 hover:text-primary font-medium transition-colors">系统信息</a>
+                <button id="theme-toggle" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all">
+                    <i class="fa fa-moon-o mr-1.5"></i> 深色模式
+                </button>
+            </nav>
+            
+            <!-- 移动端菜单按钮 -->
+            <button id="menu-toggle" class="md:hidden text-gray-700 hover:text-primary text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute top-full left-0 right-0 animate-fade-in">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#data-input" class="text-gray-700 hover:text-primary py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">数据输入</a>
+                <a href="#data-query" class="text-gray-700 hover:text-primary py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">数据查询</a>
+                <a href="#data-stats" class="text-gray-700 hover:text-primary py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">数据统计</a>
+                <a href="#system-info" class="text-gray-700 hover:text-primary py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">系统信息</a>
+                <button id="mobile-theme-toggle" class="w-full py-2 px-4 text-gray-700 hover:text-primary rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fa fa-moon-o mr-1.5"></i> 深色模式
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main id="main-content" class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 欢迎信息 -->
+        <section class="mb-12 text-center">
+            <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] font-bold text-gray-800 mb-4">
+                轻松管理您的飞书多维表格数据
+            </h2>
+            <p class="text-gray-600 max-w-2xl mx-auto text-[clamp(1rem,2vw,1.125rem)]">
+                通过这个界面，您可以方便地输入新数据、查询现有记录，并查看数据统计信息。
+                所有数据将通过我们的服务集成到飞书多维表格中。
+            </p>
+        </section>
+        
+        <!-- 数据输入区域 -->
+        <section id="data-input" class="mb-16 animate-fade-in">
+            <div class="bg-white rounded-2xl shadow-card p-6 md:p-8 card-hover">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fa fa-plus text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800">数据输入</h3>
+                </div>
+                
+                <form id="data-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="date" class="block text-sm font-medium text-gray-700">日期 <span class="text-error">*</span></label>
+                            <input type="date" id="date" name="date" required 
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                                value="">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="amount" class="block text-sm font-medium text-gray-700">金额 <span class="text-error">*</span></label>
+                            <input type="number" id="amount" name="amount" min="0" step="0.01" required 
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                                placeholder="请输入金额">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="category" class="block text-sm font-medium text-gray-700">分类 <span class="text-error">*</span></label>
+                            <select id="category" name="category" required 
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <option value="">请选择分类</option>
+                                <option value="餐饮">餐饮</option>
+                                <option value="交通">交通</option>
+                                <option value="购物">购物</option>
+                                <option value="娱乐">娱乐</option>
+                                <option value="住宿">住宿</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="action" class="block text-sm font-medium text-gray-700">操作类型 <span class="text-error">*</span></label>
+                            <select id="action" name="action" required 
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <option value="create">创建</option>
+                                <option value="update">更新</option>
+                                <option value="delete">删除</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="remark" class="block text-sm font-medium text-gray-700">备注</label>
+                        <textarea id="remark" name="remark" rows="3"
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                            placeholder="请输入备注信息（可选）"></textarea>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <button type="submit" 
+                            class="px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all flex items-center space-x-2">
+                            <i class="fa fa-paper-plane"></i>
+                            <span>提交数据</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- 提交结果提示 -->
+                <div id="submit-message" class="hidden mt-6 p-4 rounded-lg"></div>
+            </div>
+        </section>
+        
+        <!-- 数据查询区域 -->
+        <section id="data-query" class="mb-16 animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="bg-white rounded-2xl shadow-card p-6 md:p-8 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fa fa-search text-secondary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">数据查询</h3>
+                    </div>
+                    <button id="refresh-data" 
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all flex items-center space-x-2">
+                        <i class="fa fa-refresh"></i>
+                        <span>刷新数据</span>
+                    </button>
+                </div>
+                
+                <!-- 数据过滤 -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-2">
+                            <label for="filter-category" class="block text-sm font-medium text-gray-700">按分类筛选</label>
+                            <select id="filter-category" 
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <option value="">全部分类</option>
+                                <option value="餐饮">餐饮</option>
+                                <option value="交通">交通</option>
+                                <option value="购物">购物</option>
+                                <option value="娱乐">娱乐</option>
+                                <option value="住宿">住宿</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="filter-date-from" class="block text-sm font-medium text-gray-700">开始日期</label>
+                            <input type="date" id="filter-date-from" 
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="filter-date-to" class="block text-sm font-medium text-gray-700">结束日期</label>
+                            <input type="date" id="filter-date-to" 
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-end">
+                        <button id="apply-filter" 
+                            class="px-5 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                            应用筛选
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 数据表格 -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- 数据将通过JavaScript动态填充 -->
+                            <tr class="animate-pulse">
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                    正在加载数据...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页控制 -->
+                <div id="pagination" class="flex justify-between items-center mt-6">
+                    <div class="text-sm text-gray-500">
+                        显示 <span id="showing-range">0-0</span> 条，共 <span id="total-count">0</span> 条记录
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prev-page" class="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            上一页
+                        </button>
+                        <button id="next-page" class="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 数据统计区域 -->
+        <section id="data-stats" class="mb-16 animate-fade-in" style="animation-delay: 0.2s;">
+            <div class="bg-white rounded-2xl shadow-card p-6 md:p-8 card-hover">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fa fa-bar-chart text-accent text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800">数据统计</h3>
+                </div>
+                
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <div class="text-sm text-gray-500 mb-1">总记录数</div>
+                        <div class="text-2xl font-bold text-gray-800" id="total-records">0</div>
+                        <div class="mt-2 text-xs text-gray-400">所有处理过的记录</div>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-xl p-5 border border-green-100">
+                        <div class="text-sm text-gray-500 mb-1">创建记录</div>
+                        <div class="text-2xl font-bold text-green-600" id="create-count">0</div>
+                        <div class="mt-2 text-xs text-gray-400">新增的记录数量</div>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                        <div class="text-sm text-gray-500 mb-1">更新记录</div>
+                        <div class="text-2xl font-bold text-blue-600" id="update-count">0</div>
+                        <div class="mt-2 text-xs text-gray-400">修改的记录数量</div>
+                    </div>
+                    
+                    <div class="bg-red-50 rounded-xl p-5 border border-red-100">
+                        <div class="text-sm text-gray-500 mb-1">删除记录</div>
+                        <div class="text-2xl font-bold text-red-600" id="delete-count">0</div>
+                        <div class="mt-2 text-xs text-gray-400">删除的记录数量</div>
+                    </div>
+                </div>
+                
+                <!-- 图表区域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-xl p-5">
+                        <h4 class="text-sm font-medium text-gray-700 mb-4">按分类统计</h4>
+                        <div class="h-64">
+                            <canvas id="category-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-5">
+                        <h4 class="text-sm font-medium text-gray-700 mb-4">按日期统计</h4>
+                        <div class="h-64">
+                            <canvas id="date-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 系统信息区域 -->
+        <section id="system-info" class="animate-fade-in" style="animation-delay: 0.3s;">
+            <div class="bg-white rounded-2xl shadow-card p-6 md:p-8 card-hover">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 bg-neutral/10 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fa fa-info-circle text-neutral text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800">系统信息</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">服务器状态</div>
+                            <div class="flex items-center">
+                                <span id="server-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <span class="w-2 h-2 mr-1.5 rounded-full bg-gray-400"></span>
+                                    未知
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">最后更新时间</div>
+                            <div class="text-gray-800" id="last-update">-</div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">运行时长</div>
+                            <div class="text-gray-800" id="uptime">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">API 地址</div>
+                            <div class="text-gray-800 font-mono text-sm break-all" id="api-url">-</div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">存储状态</div>
+                            <div class="text-gray-800" id="storage-status">-</div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">连接状态</div>
+                            <div class="text-gray-800" id="connection-status">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <div class="flex flex-wrap gap-4">
+                        <button id="check-health" 
+                            class="px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all">
+                            检查健康状态
+                        </button>
+                        <button id="clear-data" 
+                            class="px-5 py-2.5 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all">
+                            <i class="fa fa-trash-o mr-1.5"></i>
+                            清空数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-gray-300 py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-table text-primary text-xl"></i>
+                        <span class="text-lg font-semibold text-white">飞书多维表格数据管理工具</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-2">便捷的数据管理与集成解决方案</p>
+                </div>
+                
+                <div class="text-sm text-gray-400">
+                    © 2025 数据管理工具 | 版本 1.0.0
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通知弹窗 -->
+    <div id="notification" class="fixed top-24 right-4 max-w-md bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50 transform transition-all duration-300 translate-x-full opacity-0">
+    
+    <!-- 全局加载指示器 -->
+    <div id="global-loader">
+        <!-- 内容将通过JavaScript动态生成 -->
+    </div>
+        <div class="p-4">
+            <div class="flex items-start">
+                <div id="notification-icon" class="flex-shrink-0 mr-3"></div>
+                <div class="flex-1">
+                    <h4 id="notification-title" class="font-medium text-gray-900"></h4>
+                    <p id="notification-message" class="mt-1 text-sm text-gray-500"></p>
+                </div>
+                <button id="close-notification" class="ml-3 text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/ui-optimizations.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/visualization.js"></script>
+</body>
+</html>
