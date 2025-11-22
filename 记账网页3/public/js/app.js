@@ -1,5 +1,5 @@
-// 全局配置
-const API_BASE_URL = '/api';
+// 全局配置 - 修改为使用绝对路径以解决云端部署时的连接问题
+const API_BASE_URL = window.location.origin + '/api';
 
 // 引入性能优化方法
 const { debounce, throttle } = PerformanceManager;
