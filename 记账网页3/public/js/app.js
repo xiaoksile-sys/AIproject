@@ -551,9 +551,21 @@ function updateDateChart() {
 // 检查健康状态
 async function checkHealthStatus() {
     try {
+        // 添加详细日志
+        console.log('开始健康检查，当前环境:', process.env.NODE_ENV);
+        console.log('API基础URL:', API_BASE_URL);
+        console.log('尝试连接的完整URL:', window.location.origin + API_BASE_URL + '/ping');
+        
         // 检查基础健康状态
-        const healthResponse = await fetch('/api/ping');
+        const pingUrl = '/api/ping';
+        console.log('尝试ping:', pingUrl);
+        const healthResponse = await fetch(pingUrl);
+        
+        console.log('Ping响应状态:', healthResponse.status);
+        console.log('Ping响应头:', healthResponse.headers);
+        
         const healthData = await healthResponse.json();
+        console.log('Ping响应数据:', healthData);
         
         // 更新服务器状态
         const statusElement = document.getElementById('server-status');
@@ -566,8 +578,13 @@ async function checkHealthStatus() {
         }
         
         // 获取统计信息
-        const statsResponse = await fetch(`${API_BASE_URL}/stats`);
+        const statsUrl = '/api/stats';
+        console.log('尝试获取统计信息:', statsUrl);
+        const statsResponse = await fetch(statsUrl);
+        console.log('Stats响应状态:', statsResponse.status);
+        
         const statsData = await statsResponse.json();
+        console.log('Stats响应数据:', statsData);
         
         if (statsResponse.ok) {
             document.getElementById('last-update').textContent = statsData.last_saved || '-';
@@ -575,9 +592,15 @@ async function checkHealthStatus() {
             document.getElementById('api-url').textContent = window.location.origin + '/api';
             document.getElementById('storage-status').textContent = '正常';
             document.getElementById('connection-status').textContent = '已连接';
+        } else {
+            document.getElementById('storage-status').textContent = '异常';
+            document.getElementById('connection-status').textContent = '部分连接';
+            showNotification('warning', '连接警告', '部分API端点无法访问');
         }
     } catch (error) {
         console.error('健康检查失败:', error);
+        console.error('错误详情:', error.message);
+        console.error('错误堆栈:', error.stack);
         
         const statusElement = document.getElementById('server-status');
         statusElement.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';

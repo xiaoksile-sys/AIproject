@@ -327,10 +327,15 @@ app.get('/api/ping', (req, res) => {
     });
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-    console.log(`服务器正在运行，监听端口 ${PORT}`);
-    console.log(`健康检查地址: http://localhost:${PORT}/`);
-    console.log(`数据接收接口: http://localhost:${PORT}/api/receive-data`);
-    console.log(`数据查看接口: http://localhost:${PORT}/api/data`);
-});
+// 导出Express应用实例以适配Vercel Serverless Function环境
+module.exports = app;
+
+// 开发环境下启动服务器（不会在Vercel环境中执行）
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`服务器正在运行，监听端口 ${PORT}`);
+        console.log(`健康检查地址: http://localhost:${PORT}/`);
+        console.log(`数据接收接口: http://localhost:${PORT}/api/receive-data`);
+        console.log(`数据查看接口: http://localhost:${PORT}/api/data`);
+    });
+}
