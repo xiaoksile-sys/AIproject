@@ -1,5 +1,5 @@
-// 全局配置 - 修改为使用绝对路径以解决云端部署时的连接问题
-const API_BASE_URL = window.location.origin + '/api';
+// 全局配置 - 使用相对路径以确保在任何环境中都能正确连接
+const API_BASE_URL = '/api';
 
 // 引入性能优化方法
 const { debounce, throttle } = PerformanceManager;
@@ -572,7 +572,7 @@ async function checkHealthStatus() {
         if (statsResponse.ok) {
             document.getElementById('last-update').textContent = statsData.last_saved || '-';
             document.getElementById('uptime').textContent = statsData.uptime || '-';
-            document.getElementById('api-url').textContent = window.location.origin + API_BASE_URL;
+            document.getElementById('api-url').textContent = window.location.origin + '/api';
             document.getElementById('storage-status').textContent = '正常';
             document.getElementById('connection-status').textContent = '已连接';
         }
